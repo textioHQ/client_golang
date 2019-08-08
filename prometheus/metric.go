@@ -53,6 +53,8 @@ type Metric interface {
 	// dto.Metric protobuf to save allocations has disappeared. The
 	// signature of this method should be changed to "Write() (*dto.Metric,
 	// error)".
+
+	WriteAndClear(*dto.Metric) error
 }
 
 // Opts bundles the options for creating most Metric types. Each metric
@@ -143,7 +145,8 @@ func NewInvalidMetric(desc *Desc, err error) Metric {
 
 func (m *invalidMetric) Desc() *Desc { return m.desc }
 
-func (m *invalidMetric) Write(*dto.Metric) error { return m.err }
+func (m *invalidMetric) WriteAndClear(*dto.Metric) error { return m.err }
+func (m *invalidMetric) Write(*dto.Metric) error         { return m.err }
 
 type timestampedMetric struct {
 	Metric
