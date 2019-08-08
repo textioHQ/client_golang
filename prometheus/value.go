@@ -68,6 +68,10 @@ func (v *valueFunc) Desc() *Desc {
 	return v.desc
 }
 
+func (v *valueFunc) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
+
 func (v *valueFunc) Write(out *dto.Metric) error {
 	return populateMetric(v.valType, v.function(), v.labelPairs, out)
 }
@@ -115,6 +119,9 @@ func (m *constMetric) Desc() *Desc {
 	return m.desc
 }
 
+func (m *constMetric) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
 func (m *constMetric) Write(out *dto.Metric) error {
 	return populateMetric(m.valType, m.val, m.labelPairs, out)
 }
