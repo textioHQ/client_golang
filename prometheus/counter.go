@@ -107,6 +107,10 @@ func (c *counter) Inc() {
 	atomic.AddUint64(&c.valInt, 1)
 }
 
+func (c *counter) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
+
 func (c *counter) Write(out *dto.Metric) error {
 	fval := math.Float64frombits(atomic.LoadUint64(&c.valBits))
 	ival := atomic.LoadUint64(&c.valInt)

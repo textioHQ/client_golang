@@ -120,6 +120,9 @@ func (g *gauge) Add(val float64) {
 func (g *gauge) Sub(val float64) {
 	g.Add(val * -1)
 }
+func (g *gauge) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
 
 func (g *gauge) Write(out *dto.Metric) error {
 	val := math.Float64frombits(atomic.LoadUint64(&g.valBits))
