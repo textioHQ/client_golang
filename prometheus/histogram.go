@@ -294,8 +294,19 @@ func (h *histogram) Observe(v float64) {
 }
 
 func (h *histogram) WriteAndClear(out *dto.Metric) error {
+	err := h.Write(out)
+	if err != nil {
+		return err
+	}
+
+	h.writeMtx.Lock()
+	defer h.writeMtx.Unlock()
+
+	h.counts[0].buckets = make([]uint64, len(h.upperBounds))
+	h.counts[1].buckets = make([]uint64, len(h.upperBounds))
 	return nil
 }
+
 func (h *histogram) Write(out *dto.Metric) error {
 	// For simplicity, we protect this whole method by a mutex. It is not in
 	// the hot path, i.e. Observe is called much more often than Write. The

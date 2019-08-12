@@ -108,7 +108,12 @@ func (c *counter) Inc() {
 }
 
 func (c *counter) WriteAndClear(out *dto.Metric) error {
-	return nil
+	fval := math.Float64frombits(atomic.LoadUint64(&c.valBits))
+	ival := atomic.LoadUint64(&c.valInt)
+	val := fval + float64(ival)
+	atomic.StoreUint64(&c.valInt, 0)
+
+	return populateMetric(CounterValue, val, c.labelPairs, out)
 }
 
 func (c *counter) Write(out *dto.Metric) error {
