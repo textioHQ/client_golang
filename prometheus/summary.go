@@ -287,6 +287,9 @@ func (s *summary) Observe(v float64) {
 	}
 }
 
+func (s *summary) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
 func (s *summary) Write(out *dto.Metric) error {
 	sum := &dto.Summary{}
 	qs := make([]*dto.Quantile, 0, len(s.objectives))
@@ -445,7 +448,9 @@ func (s *noObjectivesSummary) Observe(v float64) {
 	// is complete.
 	atomic.AddUint64(&hotCounts.count, 1)
 }
-
+func (s *noObjectivesSummary) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
 func (s *noObjectivesSummary) Write(out *dto.Metric) error {
 	// For simplicity, we protect this whole method by a mutex. It is not in
 	// the hot path, i.e. Observe is called much more often than Write. The
@@ -656,6 +661,10 @@ type constSummary struct {
 
 func (s *constSummary) Desc() *Desc {
 	return s.desc
+}
+
+func (s *constSummary) WriteAndClear(out *dto.Metric) error {
+	return nil
 }
 
 func (s *constSummary) Write(out *dto.Metric) error {

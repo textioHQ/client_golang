@@ -154,6 +154,10 @@ func (m *wrappingMetric) Desc() *Desc {
 	return wrapDesc(m.wrappedMetric.Desc(), m.prefix, m.labels)
 }
 
+func (m *wrappingMetric) WriteAndClear(out *dto.Metric) error {
+	return nil
+}
+
 func (m *wrappingMetric) Write(out *dto.Metric) error {
 	if err := m.wrappedMetric.Write(out); err != nil {
 		return err

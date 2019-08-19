@@ -71,6 +71,15 @@ func NewRegistry() *Registry {
 	}
 }
 
+func NewRegistryOpts(clearOnGather bool) *Registry {
+	return &Registry{
+		clearOnGather:   clearOnGather,
+		collectorsByID:  map[uint64]Collector{},
+		descIDs:         map[uint64]struct{}{},
+		dimHashesByName: map[string]uint64{},
+	}
+}
+
 // NewPedanticRegistry returns a registry that checks during collection if each
 // collected Metric is consistent with its reported Desc, and if the Desc has
 // actually been registered with the registry. Unchecked Collectors (those whose
@@ -252,6 +261,7 @@ func (errs MultiError) MaybeUnwrap() error {
 // Gatherer. The zero value is not usable. Create instances with NewRegistry or
 // NewPedanticRegistry.
 type Registry struct {
+	clearOnGather         bool
 	mtx                   sync.RWMutex
 	collectorsByID        map[uint64]Collector // ID is a hash of the descIDs.
 	descIDs               map[uint64]struct{}
@@ -489,6 +499,7 @@ func (r *Registry) Gather() ([]*dto.MetricFamily, error) {
 				metric, metricFamiliesByName,
 				metricHashes,
 				registeredDescIDs,
+				r.clearOnGather,
 			))
 		case metric, ok := <-umc:
 			if !ok {
@@ -499,6 +510,7 @@ func (r *Registry) Gather() ([]*dto.MetricFamily, error) {
 				metric, metricFamiliesByName,
 				metricHashes,
 				nil,
+				r.clearOnGather,
 			))
 		default:
 			if goroutineBudget <= 0 || len(checkedCollectors)+len(uncheckedCollectors) == 0 {
@@ -516,6 +528,7 @@ func (r *Registry) Gather() ([]*dto.MetricFamily, error) {
 						metric, metricFamiliesByName,
 						metricHashes,
 						registeredDescIDs,
+						r.clearOnGather,
 					))
 				case metric, ok := <-umc:
 					if !ok {
@@ -526,6 +539,7 @@ func (r *Registry) Gather() ([]*dto.MetricFamily, error) {
 						metric, metricFamiliesByName,
 						metricHashes,
 						nil,
+						r.clearOnGather,
 					))
 				}
 				break
@@ -583,6 +597,7 @@ func processMetric(
 	metricFamiliesByName map[string]*dto.MetricFamily,
 	metricHashes map[uint64]struct{},
 	registeredDescIDs map[uint64]struct{},
+	clearAfterProcess bool,
 ) error {
 	desc := metric.Desc()
 	// Wrapped metrics collected by an unchecked Collector can have an
@@ -591,8 +606,14 @@ func processMetric(
 		return desc.err
 	}
 	dtoMetric := &dto.Metric{}
-	if err := metric.Write(dtoMetric); err != nil {
-		return fmt.Errorf("error collecting metric %v: %s", desc, err)
+	if clearAfterProcess {
+		if err := metric.WriteAndClear(dtoMetric); err != nil {
+			return fmt.Errorf("error collecting metric %v: %s", desc, err)
+		}
+	} else {
+		if err := metric.Write(dtoMetric); err != nil {
+			return fmt.Errorf("error collecting metric %v: %s", desc, err)
+		}
 	}
 	metricFamily, ok := metricFamiliesByName[desc.fqName]
 	if ok { // Existing name.
