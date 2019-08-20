@@ -254,6 +254,7 @@ func (p *Pusher) push(method string) error {
 		}
 		enc.Encode(mf)
 	}
+	fmt.Println(buf.String())
 	req, err := http.NewRequest(method, p.fullURL(), buf)
 	if err != nil {
 		return err
@@ -281,6 +282,9 @@ func (p *Pusher) push(method string) error {
 // special character, the usual url.QueryEscape is used for compatibility with
 // older versions of the Pushgateway and for better readability.
 func (p *Pusher) fullURL() string {
+	if p.job == "" {
+		return fmt.Sprintf("%s/metrics", p.url)
+	}
 	urlComponents := []string{}
 	if encodedJob, base64 := encodeComponent(p.job); base64 {
 		urlComponents = append(urlComponents, "job"+base64Suffix, encodedJob)
