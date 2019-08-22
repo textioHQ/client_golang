@@ -254,7 +254,7 @@ func (p *Pusher) push(method string) error {
 		}
 		enc.Encode(mf)
 	}
-	fmt.Println(buf.String())
+
 	req, err := http.NewRequest(method, p.fullURL(), buf)
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func (p *Pusher) push(method string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 202 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := ioutil.ReadAll(resp.Body) // Ignore any further error as this is for an error message only.
 		return fmt.Errorf("unexpected status code %d while pushing to %s: %s", resp.StatusCode, p.fullURL(), body)
 	}
