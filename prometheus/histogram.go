@@ -304,6 +304,7 @@ func (h *histogram) WriteAndClear(out *dto.Metric) error {
 
 	h.counts[0].buckets = make([]uint64, len(h.upperBounds))
 	h.counts[1].buckets = make([]uint64, len(h.upperBounds))
+	atomic.StoreUint64(&h.countAndHotIdx, 0)
 	return nil
 }
 
