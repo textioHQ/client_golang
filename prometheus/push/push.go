@@ -254,6 +254,7 @@ func (p *Pusher) push(method string) error {
 		}
 		enc.Encode(mf)
 	}
+
 	req, err := http.NewRequest(method, p.fullURL(), buf)
 	if err != nil {
 		return err
@@ -267,7 +268,7 @@ func (p *Pusher) push(method string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 202 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := ioutil.ReadAll(resp.Body) // Ignore any further error as this is for an error message only.
 		return fmt.Errorf("unexpected status code %d while pushing to %s: %s", resp.StatusCode, p.fullURL(), body)
 	}
@@ -281,6 +282,9 @@ func (p *Pusher) push(method string) error {
 // special character, the usual url.QueryEscape is used for compatibility with
 // older versions of the Pushgateway and for better readability.
 func (p *Pusher) fullURL() string {
+	if p.job == "" {
+		return fmt.Sprintf("%s/metrics", p.url)
+	}
 	urlComponents := []string{}
 	if encodedJob, base64 := encodeComponent(p.job); base64 {
 		urlComponents = append(urlComponents, "job"+base64Suffix, encodedJob)
